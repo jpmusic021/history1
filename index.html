@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>વિશ્વ ઇતિહાસ ક્વિઝ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans Gujarati', sans-serif;
+        }
+        .quiz-container {
+            background-color: #f0f4f8;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .option-btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .option-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .correct {
+            background-color: #2dd4bf !important; /* Teal-400 */
+            color: white !important;
+            border-color: #0d9488;
+        }
+        .incorrect {
+            background-color: #fb7185 !important; /* Rose-400 */
+            color: white !important;
+            border-color: #e11d48;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+
+    <div id="quiz" class="quiz-container w-full max-w-2xl mx-auto p-6 md:p-8">
+        <div id="quiz-header" class="mb-6">
+            <div class="flex justify-between items-center mb-2 text-gray-600">
+                <h1 class="text-2xl md:text-3xl font-bold text-slate-700">વિશ્વ ઇતિહાસ ક્વિઝ</h1>
+                <div id="score" class="text-xl font-bold bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md">સ્કોર: 0</div>
+            </div>
+             <div class="w-full bg-gray-300 rounded-full h-4">
+                <div id="progressBar" class="bg-blue-500 h-4 rounded-full progress-bar-inner" style="width: 0%;"></div>
+            </div>
+            <p class="text-sm text-gray-500 mt-2">પ્રશ્ન <span id="question-number">1</span> / <span id="total-questions"></span></p>
+        </div>
+
+        <div id="question-container" class="mb-6">
+            <p id="question" class="text-xl md:text-2xl font-semibold text-gray-800 leading-relaxed"></p>
+        </div>
+
+        <div id="options" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Options will be dynamically inserted here -->
+        </div>
+
+        <div id="feedback" class="mt-6 text-lg font-bold text-center"></div>
+
+        <div id="navigation" class="mt-6 text-center">
+            <button id="next-btn" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition duration-300 shadow-lg hidden">આગળનો પ્રશ્ન</button>
+        </div>
+        
+        <div id="result-container" class="hidden text-center">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">ક્વિઝ પૂર્ણ!</h2>
+            <p class="text-xl mb-6">તમારો અંતિમ સ્કોર છે: <span id="final-score" class="font-bold"></span></p>
+            <button id="restart-btn" class="bg-green-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-600 transition duration-300 shadow-lg">ફરીથી રમો</button>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            { question: "અમેરિકાનું કયું રાજ્ય પહેલા રશિયાનો ભાગ હતું?", options: ["અલાસ્કા", "ટેક્સાસ", "કેલિફોર્નિયા", "ફ્લોરિડા"], answer: "અલાસ્કા" },
+            { question: "'ન્યૂ ડીલ' નો સંબંધ ભારતીય સ્વતંત્રતા સંગ્રામ સાથે છે કે નહીં?", options: ["હા", "ના", "કદાચ", "માત્ર આંશિક રીતે"], answer: "ના" },
+            { question: "ઈરાનનું પ્રાચીન નામ શું હતું?", options: ["મેસોપોટેમિયા", "ફારસ", "સિલોન", "બર્મા"], answer: "ફારસ" },
+            { question: "બાંગ્લાદેશ પોતાનો સ્વતંત્રતા દિવસ ક્યારે મનાવે છે?", options: ["15 ઓગસ્ટ", "4 જુલાઈ", "26 માર્ચ", "14 ઓગસ્ટ"], answer: "26 માર્ચ" },
+            { question: "શેખ મુજીબુર રહેમાનનો સંબંધ ભારતના સ્વતંત્રતા સંગ્રામ સાથે હતો કે નહીં?", options: ["હા", "ના", "તેઓ તટસ્થ હતા", "તેમણે વિરોધ કર્યો"], answer: "ના" },
+            { question: "વિશ્વનું સૌથી લાંબુ લેખિત બંધારણ કયા દેશનું છે?", options: ["અમેરિકા", "ચીન", "રશિયા", "ભારત"], answer: "ભારત" },
+            { question: "સંયુક્ત રાષ્ટ્ર સંઘની સ્થાપના ક્યારે થઈ હતી?", options: ["પ્રથમ વિશ્વયુદ્ધ પછી", "બીજા વિશ્વયુદ્ધ પછી", "શીત યુદ્ધ દરમિયાન", "18મી સદીમાં"], answer: "બીજા વિશ્વયુદ્ધ પછી" },
+            { question: "'સો વર્ષીય યુદ્ધ' કોની વચ્ચે થયું હતું?", options: ["ઈંગ્લેન્ડ અને ફ્રાન્સ", "સ્પેન અને પોર્ટુગલ", "જર્મની અને રશિયા", "ભારત અને બ્રિટન"], answer: "ઈંગ્લેન્ડ અને ફ્રાન્સ" },
+            { question: "ભૂટાનના પ્રથમ વંશાનુગત શાસક કોણ હતા?", options: ["જિગ્મે સિંગ્યે વાંગચુક", "ઉગ્યેન વાંગચુક", "જિગ્મે દોરજી વાંગચુક", "જિગ્મે ખેસર નામગ્યાલ વાંગચુક"], answer: "ઉગ્યેન વાંગચુક" },
+            { question: "ભૂટાન પર કૂચ બિહારના રાજા સંગલદિપે ક્યારે શાસન કર્યું?", options: ["7મી સદી ઈ.પૂ.", "1લી સદી", "10મી સદી", "15મી સદી"], answer: "7મી સદી ઈ.પૂ." },
+            { question: "મ્યાનમાર પોતાનો સ્વતંત્રતા દિવસ ક્યારે મનાવે છે?", options: ["4 જાન્યુઆરી", "26 જાન્યુઆરી", "15 ઓગસ્ટ", "1 ડિસેમ્બર"], answer: "4 જાન્યુઆરી" },
+            { question: "બર્લિનની દીવાલ કયા વર્ષે તોડી પાડવામાં આવી હતી?", options: ["1961", "1989", "1991", "2001"], answer: "1989" },
+            { question: "બીજા વિશ્વયુદ્ધમાં સબમરીનને ટ્રેક કરવા માટે કઈ ટેકનોલોજી વિકસાવવામાં આવી હતી?", options: ["રડાર", "લેસર", "સોનાર", "જીપીએસ"], answer: "સોનાર" },
+            { question: "ભૂટાનના વર્તમાન રાજા કોણ છે?", options: ["ઉગ્યેન વાંગચુક", "શેખ હસીના", "જિગ્મે ખેસર નામગ્યાલ વાંગચુક", "પુષ્પ કમલ દહલ"], answer: "જિગ્મે ખેસર નામગ્યાલ વાંગચુક" },
+            { question: "શ્રીલંકાને ક્યારે આઝાદી મળી?", options: ["1947", "1948", "1950", "1971"], answer: "1948" },
+            { question: "ટેરાકોટા આર્મી કયા દેશની સેનાનું નિરૂપણ કરે છે?", options: ["જાપાન", "કોરિયા", "ચીન", "વિયેતનામ"], answer: "ચીન" },
+            { question: "ચીનની દીવાલ બનાવવાનો શ્રેય કોને જાય છે?", options: ["ચંગીઝ ખાન", "કિન શી હુઆંગ", "માઓ ઝેડોંગ", "કન્ફ્યુશિયસ"], answer: "કિન શી હુઆંગ" },
+            { question: "અફઘાનિસ્તાનને અકેમેનિડ સામ્રાજ્યમાં કોણે ભેળવ્યું હતું?", options: ["સાયરસ ધ ગ્રેટ", "એલેક્ઝાન્ડર ધ ગ્રેટ", "ડેરિયસ પ્રથમ", "ઝેર્ક્સિસ પ્રથમ"], answer: "ડેરિયસ પ્રથમ" },
+            { question: "બાંગ્લાદેશના પ્રથમ વડાપ્રધાન કોણ હતા?", options: ["ઝિયાઉર રહેમાન", "શેખ હસીના", "તાજુદ્દીન અહમદ", "શેખ મુજીબુર રહેમાન"], answer: "શેખ મુજીબુર રહેમાન" },
+            { question: "બ્રિટનના સૌથી લાંબો સમય શાસન કરનાર સમ્રાટ કોણ બન્યા?", options: ["મહારાણી વિક્ટોરિયા", "મહારાજા જ્યોર્જ VI", "મહારાણી એલિઝાબેથ દ્વિતીય", "મહારાજા એડવર્ડ VIII"], answer: "મહારાણી એલિઝાબેથ દ્વિતીય" },
+            { question: "શ્રીલંકામાં કયા ધર્મના અનુયાયીઓ સૌથી વધુ છે?", options: ["હિન્દુ ધર્મ", "ઇસ્લામ", "ખ્રિસ્તી ધર્મ", "બૌદ્ધ ધર્મ"], answer: "બૌદ્ધ ધર્મ" },
+            { question: "ગુલનાબાદનું યુદ્ધ કયા વર્ષે લડાયું હતું?", options: ["1658", "1722", "1757", "1801"], answer: "1722" },
+            { question: "બ્રેટન વુડ્સ કરાર હેઠળ આંતરરાષ્ટ્રીય નાણાકીય પ્રણાલી ક્યારે શરૂ થઈ?", options: ["1929", "1944", "1955", "1971"], answer: "1944" },
+            { question: "અફઘાનિસ્તાનની રાજકીય પ્રણાલીને શું કહેવાય છે?", options: ["લોકતાંત્રિક ગણરાજ્ય", "સંઘીય ગણરાજ્ય", "ઇસ્લામિક અમીરાત", "બંધારણીય રાજાશાહી"], answer: "ઇસ્લામિક અમીરાત" }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        const questionEl = document.getElementById('question');
+        const optionsEl = document.getElementById('options');
+        const feedbackEl = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        const scoreEl = document.getElementById('score');
+        const resultContainerEl = document.getElementById('result-container');
+        const finalScoreEl = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+        const questionNumberEl = document.getElementById('question-number');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const progressBarEl = document.getElementById('progressBar');
+        
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            scoreEl.textContent = `સ્કોર: ${score}`;
+            resultContainerEl.classList.add('hidden');
+            document.getElementById('quiz-header').classList.remove('hidden');
+            questionEl.parentElement.classList.remove('hidden');
+            optionsEl.classList.remove('hidden');
+            nextBtn.classList.add('hidden');
+            feedbackEl.textContent = '';
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            feedbackEl.textContent = '';
+            nextBtn.classList.add('hidden');
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionEl.textContent = currentQuestion.question;
+            optionsEl.innerHTML = '';
+            
+            // Shuffle options to make it more challenging
+            const shuffledOptions = [...currentQuestion.options].sort(() => Math.random() - 0.5);
+
+            shuffledOptions.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option-btn', 'w-full', 'p-4', 'text-left', 'bg-white', 'rounded-lg', 'border-2', 'border-gray-200', 'hover:bg-blue-100', 'hover:border-blue-300');
+                button.onclick = selectAnswer;
+                optionsEl.appendChild(button);
+            });
+            
+            questionNumberEl.textContent = currentQuestionIndex + 1;
+            totalQuestionsEl.textContent = quizData.length;
+            updateProgressBar();
+        }
+        
+        function updateProgressBar() {
+            const progress = ((currentQuestionIndex) / quizData.length) * 100;
+            progressBarEl.style.width = `${progress}%`;
+        }
+
+        function selectAnswer(e) {
+            const selectedBtn = e.target;
+            const correct = selectedBtn.textContent === quizData[currentQuestionIndex].answer;
+
+            if (correct) {
+                score++;
+                feedbackEl.textContent = 'સાચો જવાબ!';
+                feedbackEl.classList.remove('text-red-500');
+                feedbackEl.classList.add('text-green-500');
+                selectedBtn.classList.add('correct');
+            } else {
+                feedbackEl.textContent = `ખોટો જવાબ! સાચો જવાબ છે: ${quizData[currentQuestionIndex].answer}`;
+                feedbackEl.classList.remove('text-green-500');
+                feedbackEl.classList.add('text-red-500');
+                selectedBtn.classList.add('incorrect');
+            }
+            
+            scoreEl.textContent = `સ્કોર: ${score}`;
+            Array.from(optionsEl.children).forEach(button => {
+                button.disabled = true;
+                if(button.textContent === quizData[currentQuestionIndex].answer) {
+                    button.classList.add('correct');
+                }
+            });
+
+            nextBtn.classList.remove('hidden');
+        }
+
+        function showResults() {
+            document.getElementById('quiz-header').classList.add('hidden');
+            questionEl.parentElement.classList.add('hidden');
+            optionsEl.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            feedbackEl.textContent = '';
+            
+            resultContainerEl.classList.remove('hidden');
+            finalScoreEl.textContent = `${score} / ${quizData.length}`;
+        }
+
+        nextBtn.addEventListener('click', () => {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+                 Array.from(optionsEl.children).forEach(button => {
+                    button.disabled = false;
+                    button.classList.remove('correct', 'incorrect');
+                });
+            } else {
+                updateProgressBar(); // To make it 100% at the end
+                progressBarEl.style.width = `100%`;
+                showResults();
+            }
+        });
+
+        restartBtn.addEventListener('click', startQuiz);
+
+        // Initial load
+        startQuiz();
+    </script>
+</body>
+</html>
